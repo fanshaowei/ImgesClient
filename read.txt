@@ -1,0 +1,12 @@
+导入依赖包，在pom.xmlh目录下执行以下命令
+mvn dependency:copy-dependencies -DoutputDirectory=lib
+
+1、在e盘目录下分别创建文件夹 E:\AppImg\copyImgs，E:\AppImg\sourceImgs
+并设置AppImg文件夹权限为全部
+
+2、安装java环境
+   检测java环境是否安装成功 
+   1）javac
+   2）java
+
+3、在jar包所在的目录执行以下命令：java -jar  -Xms512m -Xmx512m -XX:PermSize=128M -XX:MaxPermSize=256M ImgClient.jar
