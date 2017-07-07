@@ -1,8 +1,11 @@
 导入依赖包，在pom.xmlh目录下执行以下命令
 mvn dependency:copy-dependencies -DoutputDirectory=lib
 
+<<<<<<< HEAD
 生成可执行jar包：添加pom.xml插件，并执行mvn assembly:assembly
 
+=======
+>>>>>>> 0a0d7cfb4673b614e02d5d0ee47b28481550718b
 1、在e盘目录下分别创建文件夹 E:\AppImg\copyImgs，E:\AppImg\sourceImgs
 并设置AppImg文件夹权限为全部
 

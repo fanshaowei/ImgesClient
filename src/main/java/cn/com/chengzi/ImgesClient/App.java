@@ -7,10 +7,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
+
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
-import org.apache.commons.codec.binary.Base64;
+import net.sf.json.JSONObject;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -20,6 +24,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
 /**
  * Hello world!
  *
@@ -28,6 +34,7 @@ public class App
 {
 	private static String imgSourcePath = "E:\\AppImg\\sourceImgs";
 	private static String imgCopyPath = "E:\\AppImg\\copyImgs";
+
 	private static String zipImgsPath = "E:\\AppImg\\zipimgs";
 	private static String uploadUrl = "http://ssw.chengziapp.com/WechatApp/image/base64ImgStrDecode2";	
 	
@@ -60,11 +67,13 @@ public class App
 		File fileFload = new File(imgSourcePath);
 		File[] files = fileFload.listFiles();
 		File fileTemp = null;
+
 		ImageHelper imageHelper = ImageHelper.getImageHelper();
 		
 		for(int i=0; i<files.length; i++){
 			fileTemp = files[i];
 			String imgName = fileTemp.getName();
+
 			imageHelper.scaleImage(imgSourcePath + File.separator + imgName, zipImgsPath + File.separator + imgName, 0.5, "jpg");
 			
 			try {				
@@ -77,6 +86,7 @@ public class App
 				
 				while((byteRead = bufferInputStream.read(buff, 0, buff.length)) != -1){
 					imgBase64Str = Base64.encodeBase64String(buff);	//将图片转成BASE64字符串
+
 					isUploadOk = doPost(uploadUrl,  imgName + ";" + imgBase64Str);					
 					if("true".equals(isUploadOk)){
 						bufferOutputStream.write(buff, 0, byteRead);//复制图片到另一个文件夹								
