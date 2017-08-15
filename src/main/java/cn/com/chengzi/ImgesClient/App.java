@@ -6,7 +6,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,20 +22,22 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-
 /**
- * Hello world!
+ * 本地图片上传工具
+ * @author fanshaowei
  *
  */
 public class App 
-{
-	private static String imgSourcePath = "E:\\AppImg\\sourceImgs";
-	private static String imgCopyPath = "E:\\AppImg\\copyImgs";
-
-	private static String zipImgsPath = "E:\\AppImg\\zipimgs";
-	private static String uploadUrl = "http://ssw.chengziapp.com/WechatApp/image/base64ImgStrDecode2";	
+{			
+	private static final String CONFIG = "config.properties";
+	private static String imgSourcePath = null;
+	private static String imgCopyPath = null;
+	private static String uploadImgUrl = null;
+	private static long period = 0;
 	
 	public static void main(String[] args) {
+		getConfigProperties();
+		
 		final Timer timer = new Timer();
 		timer.schedule(new TimerTask() {					
 			@Override
@@ -41,12 +45,41 @@ public class App
 				try {
 					getImgStr();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
-		}, 5000, 5000);
+		}, 5000, period);
 		
+	}
+	
+	public static void getConfigProperties(){
+		String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+		
+		String[] fileLevel = jarPath.split("/");
+		fileLevel[fileLevel.length - 1] = CONFIG;
+		
+		StringBuilder sb = new StringBuilder();
+		for (String s : fileLevel) {			
+			if (s != null && !"".equals(s)) {
+				sb.append("/").append(s);
+			}else{
+				continue;
+			}
+		}
+		jarPath = sb.toString();
+		
+		Properties properties = new Properties();
+		try {
+			InputStream inputstream = new BufferedInputStream(new FileInputStream(jarPath));
+			properties.load(inputstream);
+			
+			uploadImgUrl = properties.getProperty("UploadImgUrl");
+			imgSourcePath = properties.getProperty("ImgSourcePath");
+			imgCopyPath = properties.getProperty("ImgCopyPath");
+			period = Long.parseLong(properties.getProperty("Period"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
 	}
 	
 	public static String getImgStr() throws InterruptedException{
@@ -62,14 +95,10 @@ public class App
 		File fileFload = new File(imgSourcePath);
 		File[] files = fileFload.listFiles();
 		File fileTemp = null;
-
-		ImageHelper imageHelper = ImageHelper.getImageHelper();
 		
 		for(int i=0; i<files.length; i++){
 			fileTemp = files[i];
 			String imgName = fileTemp.getName();
-
-			imageHelper.scaleImage(imgSourcePath + File.separator + imgName, zipImgsPath + File.separator + imgName, 0.5, "jpg");
 			
 			try {				
 				BufferedOutputStream bufferOutputStream = new BufferedOutputStream(new FileOutputStream(imgCopyPath + File.separator + imgName));				
@@ -82,11 +111,13 @@ public class App
 				while((byteRead = bufferInputStream.read(buff, 0, buff.length)) != -1){
 					imgBase64Str = Base64.encodeBase64String(buff);	//将图片转成BASE64字符串
 
-					isUploadOk = doPost(uploadUrl,  imgName + ";" + imgBase64Str);					
+					isUploadOk = doPost(uploadImgUrl,  imgName + ";" + imgBase64Str);					
 					if("true".equals(isUploadOk)){
+						System.out.println("upload img success");
 						bufferOutputStream.write(buff, 0, byteRead);//复制图片到另一个文件夹								
 					}else{
-						doPost(uploadUrl,imgBase64Str);//如果不成功，再传
+						System.out.println("upload img fail,try again!!!");
+						doPost(uploadImgUrl,imgBase64Str);//如果不成功，再传
 					}																
 				}									
 				bufferOutputStream.flush();
@@ -95,8 +126,7 @@ public class App
 				bufferInputStream.close();
 
 				if(fileTemp.exists()){
-					boolean dele = fileTemp.delete();//删除原文件
-					System.out.println(dele);					
+					fileTemp.delete();//删除原文件					
 				}								
 			} catch (IOException e) {
 				e.printStackTrace();
